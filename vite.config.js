@@ -26,6 +26,8 @@ function examApiPlugin() {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // في الإنتاج يُنشر على GitHub Pages تحت مسار فرعي باسم المستودع، وفي التطوير على الجذر
+  base: command === 'build' ? '/zahraa-school/' : '/',
   plugins: [react(), examApiPlugin()],
-})
+}))

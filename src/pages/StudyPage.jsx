@@ -45,7 +45,7 @@ export default function StudyPage() {
   )
 }
 
-const PDF_PATH = '/teoria-book.pdf?v=2'
+const PDF_PATH = import.meta.env.BASE_URL + 'teoria-book.pdf?v=2'
 
 function TheorySection({ navigate }) {
   return (
@@ -155,7 +155,7 @@ function SignsSection() {
                 onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.05)'; e.currentTarget.style.transform = 'translateY(0)' }}
               >
                 <div style={{ height: 130, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', borderBottom: '1px solid #f1f5f9' }}>
-                  <img src={it.img} alt={it.code} draggable={false} loading="lazy" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
+                  <img src={import.meta.env.BASE_URL + it.img.replace(/^\//, '')} alt={it.code} draggable={false} loading="lazy" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
                 </div>
                 <div style={{ padding: '.9rem 1rem', display: 'flex', flexDirection: 'column', gap: '.4rem', flex: 1 }}>
                   <span style={{ alignSelf: 'flex-start', fontSize: '.78rem', fontWeight: 800, color: '#1a56db', background: '#eff6ff', padding: '.2rem .7rem', borderRadius: 6 }}>{it.code}</span>

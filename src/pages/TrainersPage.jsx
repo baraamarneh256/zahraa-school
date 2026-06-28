@@ -3,7 +3,7 @@ import SectionHeader from '../components/ui/SectionHeader'
 import Reveal from '../components/ui/Reveal'
 
 // ضع ملف الكتاب باسم shamel-trainers.pdf داخل مجلد public لتفعيل التحميل.
-const BOOK_PATH = '/shamel-trainers.pdf'
+const BOOK_PATH = import.meta.env.BASE_URL + 'shamel-trainers.pdf'
 
 export default function TrainersPage() {
   const navigate = useNavigate()

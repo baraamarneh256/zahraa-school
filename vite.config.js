@@ -26,8 +26,8 @@ function examApiPlugin() {
   }
 }
 
-export default defineConfig(({ command }) => ({
-  // في الإنتاج يُنشر على GitHub Pages تحت مسار فرعي باسم المستودع، وفي التطوير على الجذر
-  base: command === 'build' ? '/zahraa-school/' : '/',
+export default defineConfig(() => ({
+  // GitHub Pages يخدم الموقع تحت مسار فرعي باسم المستودع، أما Vercel/التطوير فعلى الجذر
+  base: process.env.GITHUB_ACTIONS ? '/zahraa-school/' : '/',
   plugins: [react(), examApiPlugin()],
 }))

@@ -33,7 +33,7 @@ export default function Footer() {
         <div>
           <h4 style={{ fontSize: '.95rem', fontWeight: 800, color: '#fff', marginBottom: '1rem' }}>روابط سريعة</h4>
           <ul style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-            {[['/', 'الرئيسية'], ['/study', 'دراسة التؤوريا'], ['/quiz', 'الاختبار النظري'], ['/trainers', 'الشامل للمدربين'], ['/steps', 'خطوات الرخصة'], ['/faq', 'أسئلة متكررة'], ['/contact', 'تواصل معنا']].map(([to, label]) => (
+            {[['/', 'الرئيسية'], ['/study', 'دراسة التؤوريا'], ['/quiz', 'الاختبار النظري'], ['/my-results', 'نتائج اختباراتي'], ['/trainers', 'الشامل للمدربين'], ['/steps', 'خطوات الرخصة'], ['/faq', 'أسئلة متكررة'], ['/contact', 'تواصل معنا']].map(([to, label]) => (
               <li key={to}>
                 <Link to={to} style={{ fontSize: '.85rem', opacity: .75, textDecoration: 'none', color: 'inherit' }}>{label}</Link>
               </li>

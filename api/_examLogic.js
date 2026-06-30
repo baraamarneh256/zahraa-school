@@ -19,6 +19,19 @@ const ENDPOINTS = {
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
 
+/**
+ * يطبّع نتيجة الامتحان إلى 'pass' أو 'fail'.
+ * الوزارة تُعيد القيمة بالإنجليزية (Pass/Fail) للنظري وبالعربية (ناجح/راسب) للعملي.
+ * نتحقق من الرسوب أولاً حتى لا تُطابَق عبارات مثل "غير ناجح" خطأً كنجاح.
+ */
+function normalizeResult(raw) {
+  const s = String(raw ?? '').trim()
+  const low = s.toLowerCase()
+  if (low.includes('fail') || s.includes('راسب') || s.includes('غير ناجح') || s.includes('غير مجتاز')) return 'fail'
+  if (low.includes('pass') || low.includes('success') || s.includes('ناجح') || s.includes('نجح') || s.includes('مجتاز')) return 'pass'
+  return 'fail'
+}
+
 /** يستخرج قيمة _token من صفحة HTML. */
 function extractToken(html) {
   const m =
@@ -97,7 +110,7 @@ export async function getExamResult(type, id) {
         type,
         name: data[cfg.nameKey] || '',
         date: data.examDate || '',
-        result: rawResult === 'Pass' ? 'pass' : 'fail',
+        result: normalizeResult(rawResult),
         details: data, // كل الحقول الأصلية كما وردت من الوزارة
       },
     }

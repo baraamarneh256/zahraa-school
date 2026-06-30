@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { QUIZ_DATA, QUIZ_TYPES } from '../data/quizData'
 import SectionHeader from '../components/ui/SectionHeader'
 import Btn from '../components/ui/Btn'
+import AnswerReview from '../components/AnswerReview'
 
 const ALLOWED_WRONG = 5            // عدد الأخطاء المسموح بها (30 سؤالاً ← النجاح 25)
 const EXAM_SECONDS = 40 * 60
@@ -136,10 +137,6 @@ export default function QuizPage() {
     try { localStorage.setItem('quiz_history', JSON.stringify(updated)) } catch {}
   }
 
-  const deleteHistoryEntry = (date) => {
-    persistHistory(history.filter(h => h.date !== date))
-  }
-
   const startQuiz = useCallback((exam, style = 'normal') => {
     const processed = exam.questions.map(q => {
       let optsWithMeta = q.opts.map((opt, i) => ({
@@ -199,6 +196,8 @@ export default function QuizPage() {
       correct: correctCount,
       total: qs.length,
       passed,
+      questions: qs,            // لحفظ الأسئلة ومراجعتها لاحقاً
+      answers: answersSnap,     // إجابات المستخدم
     }
     const updated = [entry, ...history].slice(0, 50)
     persistHistory(updated)
@@ -229,28 +228,22 @@ export default function QuizPage() {
             {/* ── SELECT TYPE ── */}
             {phase === 'select' && (
               <div className="page-enter">
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0a2463', marginBottom: '1rem' }}>اختر نوع الرخصة:</h3>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '.8rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0a2463' }}>اختر نوع الرخصة:</h3>
+                  {history.length > 0 && (
+                    <button onClick={() => navigate('/my-results')} style={{
+                      background: '#eff6ff', border: '2px solid #dbeafe', borderRadius: 10,
+                      padding: '.5rem 1rem', cursor: 'pointer', color: '#1a56db', fontWeight: 800,
+                      fontFamily: "'Cairo',sans-serif", fontSize: '.85rem',
+                    }}>📊 نتائجي المحفوظة ({history.length})</button>
+                  )}
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '1rem' }}>
                   {QUIZ_TYPES.map(qt => {
                     const examCount   = (QUIZ_DATA[qt.id] || []).length
-                    const typeHistory = history.filter(h => h.type === qt.id)
                     const empty       = examCount === 0
                     return (
                       <div key={qt.id} style={{ position: 'relative' }}>
-                        {typeHistory.length > 0 && (
-                          <button
-                            onClick={e => { e.stopPropagation(); persistHistory(history.filter(h => h.type !== qt.id)) }}
-                            title="مسح سجل هذه الرخصة"
-                            style={{
-                              position: 'absolute', top: -10, left: -10, zIndex: 2,
-                              width: 26, height: 26, borderRadius: '50%',
-                              background: '#ef4444', color: '#fff', border: 'none',
-                              cursor: 'pointer', fontSize: '.8rem', lineHeight: 1,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              boxShadow: '0 2px 6px rgba(239,68,68,.4)',
-                            }}
-                          >🗑</button>
-                        )}
                         <div
                           onClick={() => !empty && navigate('/quiz/' + qt.id)}
                           style={{
@@ -269,11 +262,6 @@ export default function QuizPage() {
                           <div style={{ fontSize: '.8rem', color: '#475569', marginTop: '.2rem' }}>
                             {empty ? 'قريباً' : `${examCount} امتحان`}
                           </div>
-                          {typeHistory.length > 0 && (
-                            <div style={{ fontSize: '.75rem', color: '#94a3b8', marginTop: '.4rem' }}>
-                              {typeHistory.length} محاولة سابقة
-                            </div>
-                          )}
                         </div>
                       </div>
                     )
@@ -324,65 +312,26 @@ export default function QuizPage() {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '.8rem' }}>
-                    {numberedExams(QUIZ_DATA[selectedType] || []).map((exam, i) => {
-                      const examHistory = history.filter(h => h.examName === exam.name)
-                      return (
-                        <div key={i}>
-                          <div onClick={() => startQuiz(exam, examStyle)} style={{
-                            background: '#fff', border: '2px solid #e2e8f0', borderRadius: 14,
-                            padding: '1.2rem 1.5rem', cursor: 'pointer', transition: 'all .25s',
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            boxShadow: '0 2px 8px rgba(0,0,0,.06)',
-                          }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = '#1a56db'; e.currentTarget.style.background = '#eff6ff' }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff' }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'linear-gradient(135deg,#0a2463,#1a56db)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '1rem' }}>{i + 1}</div>
-                              <div>
-                                <div style={{ fontWeight: 800, color: '#0a2463' }}>{exam.name}</div>
-                                <div style={{ fontSize: '.82rem', color: '#475569', marginTop: '.2rem' }}>{exam.questions.length} سؤال • 40 دقيقة • النجاح: {passMark(exam.questions.length)} صحيحة</div>
-                              </div>
-                            </div>
-                            <span style={{ color: '#1a56db', fontWeight: 700, fontSize: '1.2rem' }}>←</span>
+                    {numberedExams(QUIZ_DATA[selectedType] || []).map((exam, i) => (
+                      <div key={i} onClick={() => startQuiz(exam, examStyle)} style={{
+                        background: '#fff', border: '2px solid #e2e8f0', borderRadius: 14,
+                        padding: '1.2rem 1.5rem', cursor: 'pointer', transition: 'all .25s',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        boxShadow: '0 2px 8px rgba(0,0,0,.06)',
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#1a56db'; e.currentTarget.style.background = '#eff6ff' }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                          <div style={{ width: 44, height: 44, borderRadius: 10, background: 'linear-gradient(135deg,#0a2463,#1a56db)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '1rem' }}>{i + 1}</div>
+                          <div>
+                            <div style={{ fontWeight: 800, color: '#0a2463' }}>{exam.name}</div>
+                            <div style={{ fontSize: '.82rem', color: '#475569', marginTop: '.2rem' }}>{exam.questions.length} سؤال • 40 دقيقة • النجاح: {passMark(exam.questions.length)} صحيحة</div>
                           </div>
-
-                          {examHistory.length > 0 && (
-                            <div style={{ marginTop: '.3rem', paddingRight: '3.5rem', display: 'flex', flexDirection: 'column', gap: '.3rem' }}>
-                              {examHistory.map(h => (
-                                <div key={h.date} style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                  padding: '.45rem .9rem', borderRadius: 8,
-                                  background: h.passed ? '#f0fdf4' : '#fff5f5',
-                                  border: `1px solid ${h.passed ? '#bbf7d0' : '#fecaca'}`,
-                                  fontSize: '.8rem',
-                                }}>
-                                  <span style={{ color: '#64748b' }}>
-                                    {new Date(h.date).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                  </span>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '.7rem' }}>
-                                    <span style={{ fontWeight: 700, color: h.passed ? '#16a34a' : '#dc2626' }}>
-                                      {h.correct}/{h.total} {h.passed ? '✅' : '❌'}
-                                    </span>
-                                    <button
-                                      onClick={e => { e.stopPropagation(); deleteHistoryEntry(h.date) }}
-                                      title="حذف"
-                                      style={{
-                                        background: 'none', border: 'none', cursor: 'pointer',
-                                        color: '#94a3b8', fontSize: '1rem', lineHeight: 1,
-                                        padding: '0 .2rem', borderRadius: 4, transition: 'color .15s',
-                                      }}
-                                      onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                                      onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
-                                    >×</button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
                         </div>
-                      )
-                    })}
+                        <span style={{ color: '#1a56db', fontWeight: 700, fontSize: '1.2rem' }}>←</span>
+                      </div>
+                    ))}
                   </div>
                   </>
                 )}
@@ -487,6 +436,7 @@ function ResultScreen({ resultData, onRetry, onHome, onContact, onExams }) {
   const { correctCount, passed, answersSnap, qs, passThreshold } = resultData
   const wrongCount = answersSnap.filter((a, i) => a !== null && a !== qs[i]?.ans).length
   const unanswered = answersSnap.filter(a => a === null).length
+  const [showReview, setShowReview] = useState(false)
 
   return (
     <div className="page-enter" style={{ background: '#fff', borderRadius: 20, padding: '3rem 2rem', textAlign: 'center', border: `2px solid ${passed ? '#10b981' : '#ef4444'}`, boxShadow: '0 4px 24px rgba(0,0,0,.10)' }}>
@@ -521,11 +471,18 @@ function ResultScreen({ resultData, onRetry, onHome, onContact, onExams }) {
         ))}
       </div>
       <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <Btn variant="blue" onClick={() => setShowReview(s => !s)}>{showReview ? '🙈 إخفاء المراجعة' : '📝 مراجعة إجاباتي'}</Btn>
         <Btn variant="blue" onClick={onRetry}>🔄 حاول مرة أخرى</Btn>
         <Btn variant="gray" onClick={onExams}>📋 امتحانات أخرى</Btn>
         <Btn variant="blue" onClick={onContact}>💬 تواصل معنا</Btn>
         <Btn variant="gray" onClick={onHome}>🏠 الرئيسية</Btn>
       </div>
+
+      {showReview && (
+        <div style={{ marginTop: '2rem', textAlign: 'right' }}>
+          <AnswerReview questions={qs} answers={answersSnap} />
+        </div>
+      )}
     </div>
   )
 }

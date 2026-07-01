@@ -115,6 +115,9 @@ export default function QuizPage() {
   const [timeLeft, setTimeLeft]     = useState(0)
   const [resultData, setResultData] = useState(null)
   const [history, setHistory]       = useState(loadHistory)
+  const [autoNext, setAutoNext]     = useState(() => {
+    try { return localStorage.getItem('quiz_autonext') !== '0' } catch { return true }
+  })
   const timerRef = useRef(null)
 
   // Sync phase when URL param changes (browser back/forward)
@@ -179,8 +182,17 @@ export default function QuizPage() {
     return () => clearInterval(timerRef.current)
   }, [phase])
 
+  const persistAutoNext = (val) => {
+    setAutoNext(val)
+    try { localStorage.setItem('quiz_autonext', val ? '1' : '0') } catch {}
+  }
+
   const chooseAnswer = (chosen) => {
     setAnswers(prev => { const a = [...prev]; a[current] = chosen; return a })
+    // الانتقال التلقائي للسؤال التالي بعد اختيار الإجابة
+    if (autoNext && current < questions.length - 1) {
+      setTimeout(() => setCurrent(c => Math.min(questions.length - 1, c + 1)), 220)
+    }
   }
 
   const submitExam = useCallback((answersSnap, qs, exam, type) => {
@@ -222,7 +234,7 @@ export default function QuizPage() {
     <div className="page-enter" style={{ paddingTop: 70, minHeight: '100vh', background: '#f8fafc' }}>
       <section className="section" style={{ padding: '5rem 1.5rem' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <SectionHeader badge="الاختبار النظري" title="تدرّب على أسئلة التيوريا" subtitle="اختبارات تدريبية حقيقية لمساعدتك على اجتياز امتحان رخصة القيادة" />
+          <SectionHeader badge="الاختبار النظري" title="تدرّب على أسئلة التؤوريا" subtitle="اختبارات تدريبية حقيقية لمساعدتك على اجتياز امتحان رخصة القيادة" />
           <div style={{ maxWidth: 800, margin: '0 auto' }}>
 
             {/* ── SELECT TYPE ── */}
@@ -353,6 +365,17 @@ export default function QuizPage() {
                   </div>
                   <div style={{ background: '#e2e8f0', borderRadius: 50, height: 7, overflow: 'hidden' }}>
                     <div style={{ height: '100%', background: 'linear-gradient(90deg,#1a56db,#60a5fa)', borderRadius: 50, width: `${((current + 1) / questions.length) * 100}%`, transition: 'width .4s' }} />
+                  </div>
+
+                  {/* الانتقال التلقائي للسؤال التالي عند اختيار الإجابة */}
+                  <div
+                    onClick={() => persistAutoNext(!autoNext)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '.55rem', marginTop: '.8rem', cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <span style={{ fontSize: '.82rem', fontWeight: 700, color: autoNext ? '#1a56db' : '#64748b' }}>⚡ الانتقال التلقائي للسؤال التالي</span>
+                    <span style={{ width: 40, height: 22, borderRadius: 20, background: autoNext ? '#1a56db' : '#cbd5e1', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                      <span style={{ position: 'absolute', top: 2, left: autoNext ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.3)', transition: 'left .2s' }} />
+                    </span>
                   </div>
                 </div>
 

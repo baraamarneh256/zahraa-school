@@ -45,7 +45,7 @@ export default function Footer() {
         <div>
           <h4 style={{ fontSize: '.95rem', fontWeight: 800, color: '#fff', marginBottom: '1rem' }}>خدماتنا</h4>
           <ul style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-            {['رخصة خصوصي', 'رخصة شحن', 'رخصة عمومي', 'رخصة دراجة نارية'].map(s => (
+            {['رخصة خصوصي جير عادي', 'رخصة خصوصي جير أوتوماتيك', 'رخصة شحن خفيف', 'رخصة شحن ثقيل', 'رخصة تريلا', 'رخصة باص', 'رخصة رافعة شوكية', 'رخصة رافعة تلسكوبية'].map(s => (
               <li key={s} style={{ fontSize: '.85rem', opacity: .75 }}>{s}</li>
             ))}
           </ul>
